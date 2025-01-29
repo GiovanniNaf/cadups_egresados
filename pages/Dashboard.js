@@ -133,15 +133,20 @@ export default function Dashboard({ handleLogout }) {
                     const diferenciaDias = Math.ceil((fechaPago - fechaHoy) / (1000 * 3600 * 24));
 
                     // Formato de la fecha en "25 de Enero del 2025"
+                    const fechaLocal = new Date(fechaPago.toLocaleString('en-US', { timeZone: 'UTC' }));
+
+                    // Ahora formateamos la fecha de la manera que quieres
                     const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
-                    const fechaFormateada = fechaPago.toLocaleDateString('es-MX', opciones);
+                    const fechaFormateada = fechaLocal.toLocaleDateString('es-MX', opciones);
+
+                    // Separar la fecha para darle el formato adecuado
                     const [dia, mes, anio] = fechaFormateada.split(" ");
                     const fechaFinal = `${dia} ${mes} ${anio}`;
 
                     // Asignar clase según la diferencia de días
                     const fechaClass = diferenciaDias <= 7 ? 'text-red-600' : 'text-green-600';
 
-                   
+
                     const handleShowReport = async (id) => {
                       try {
                         // Obtener los pagos de la base de datos usando Supabase
@@ -149,23 +154,23 @@ export default function Dashboard({ handleLogout }) {
                           .from('pagos')
                           .select('*')
                           .eq('egresado_id', id);
-                    
+
                         if (error) {
                           console.error('Error fetching pagos:', error);
                           return;
                         }
-                    
+
                         // Obtener los datos del egresado desde la lista ya cargada
                         const egresado = egresados.find((e) => e.id === id);
-                    
+
                         // Generar el PDF
                         const doc = new jsPDF();
-                    
+
                         // Estilo de Título
                         doc.setFontSize(20);
                         doc.setFont('helvetica', 'bold');
                         doc.text('Reporte de Pagos', 14, 20);
-                    
+
                         // Información del egresado
                         doc.setFontSize(14);
                         doc.setFont('helvetica', 'normal');
@@ -173,29 +178,29 @@ export default function Dashboard({ handleLogout }) {
                         doc.text(`Fecha de Egreso: ${egresado.fecha_egreso}`, 14, 45);
                         doc.text(`Proximo Día de Pago: ${egresado.dia_pago}`, 14, 55);
                         doc.text(`Cuota: $${egresado.cuota_seguimiento}`, 14, 65);
-                    
+
                         // Calcular el monto total que debería haberse pagado
                         const totalEsperado = egresado.cuota_seguimiento * data.length;
-                        
+
                         // Calcular el total pagado
                         const totalPagado = data.reduce((sum, pago) => sum + pago.monto, 0);
-                        
+
                         // Calcular el adeudo (si el total pagado es menor al total esperado)
                         const adeudo = totalEsperado > totalPagado ? totalEsperado - totalPagado : 0;
-                    
+
                         // Espacio antes de la tabla
                         let y = 75;
                         doc.setFontSize(12);
                         doc.setFont('helvetica', 'bold');
-                    
+
                         // Tabla de pagos
                         const tableData = data.map((pago) => [
                           pago.fecha_pago,               // Fecha de pago
-                          `$${pago.monto}`,  
+                          `$${pago.monto}`,
                           pago.recibio,
                           pago.tipo_pago,            // Monto del pago
                         ]);
-                    
+
                         // Estilo de la tabla
                         doc.autoTable({
                           head: [['Fecha de Pago', 'Monto', 'Recibió', 'Tipo de Pago']],
@@ -217,31 +222,31 @@ export default function Dashboard({ handleLogout }) {
                             cellPadding: 6, // Ajuste de espaciado de celdas
                           },
                         });
-                    
+
                         // Mostrar el adeudo
                         doc.setFontSize(14);
                         doc.setFont('helvetica', 'bold');
                         doc.text(`Total Pagado: $${totalPagado}`, 14, doc.autoTable.previous.finalY + 10);
                         doc.text(`Total Esperado: $${totalEsperado}`, 14, doc.autoTable.previous.finalY + 20);
-                    
+
                         // Si hay adeudo, lo mostramos
                         if (adeudo > 0) {
                           doc.text(`Adeudo: $${adeudo}`, 14, doc.autoTable.previous.finalY + 30);
                         } else {
                           doc.text('No hay adeudo.', 14, doc.autoTable.previous.finalY + 30);
                         }
-                    
+
                         const pdfBlob = doc.output('blob');
                         const pdfUrl = URL.createObjectURL(pdfBlob);
                         window.open(pdfUrl, '_blank');
-                        
+
                       } catch (error) {
                         console.error('Error al generar el reporte:', error);
                       }
                     };
-                    
-                    
-                   
+
+
+
 
                     //Eliminar
 
@@ -265,8 +270,8 @@ export default function Dashboard({ handleLogout }) {
                     return (
                       <tr key={egresado.id}>
                         <td className="px-4 py-2 border-b">{egresado.nombre}</td>
-                        <td className={`px-4 py-2 border-b ${fechaClass}`}>{fechaFinal}</td>
-                        <td className="px-4 py-2 border-b">${egresado.cuota_seguimiento} MXN</td>
+                        <td className={`px-4 py-2 border-b font-bold text-center ${fechaClass}`}>{fechaFinal}</td>
+                        <td className="px-4 py-2 border-b font-semibold">${egresado.cuota_seguimiento} MXN</td>
                         <td className="px-4 py-2 border-b flex space-x-2">
                           <Button
                             onClick={() => handleShowReport(egresado.id)}
