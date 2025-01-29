@@ -163,6 +163,21 @@ export default function Dashboard({ handleLogout }) {
                         // Obtener los datos del egresado desde la lista ya cargada
                         const egresado = egresados.find((e) => e.id === id);
 
+                        // Función para formatear las fechas a dd/MM/AAAA
+                        const formatearFecha = (fecha) => {
+                          const opciones = { year: 'numeric', month: '2-digit', day: '2-digit' };
+                          const date = new Date(fecha);
+                          
+                          // Establecer la zona horaria en UTC
+                          const fechaFormateada = date.toLocaleDateString('en-GB', {
+                            ...opciones,
+                            timeZone: 'UTC',  // Usar la zona horaria UTC
+                          });
+                        
+                          return fechaFormateada;
+                        };
+                        
+
                         // Generar el PDF
                         const doc = new jsPDF();
 
@@ -175,8 +190,8 @@ export default function Dashboard({ handleLogout }) {
                         doc.setFontSize(14);
                         doc.setFont('helvetica', 'normal');
                         doc.text(`Nombre: ${egresado.nombre}`, 14, 35);
-                        doc.text(`Fecha de Egreso: ${egresado.fecha_egreso}`, 14, 45);
-                        doc.text(`Proximo Día de Pago: ${egresado.dia_pago}`, 14, 55);
+                        doc.text(`Fecha de Egreso: ${formatearFecha(egresado.fecha_egreso)}`, 14, 45);
+                        doc.text(`Proximo Día de Pago: ${formatearFecha(egresado.dia_pago)}`, 14, 55);
                         doc.text(`Cuota: $${egresado.cuota_seguimiento}`, 14, 65);
 
                         // Calcular el monto total que debería haberse pagado
@@ -195,10 +210,10 @@ export default function Dashboard({ handleLogout }) {
 
                         // Tabla de pagos
                         const tableData = data.map((pago) => [
-                          pago.fecha_pago,               // Fecha de pago
+                          formatearFecha(pago.fecha_pago),  // Fecha de pago formateada
                           `$${pago.monto}`,
                           pago.recibio,
-                          pago.tipo_pago,            // Monto del pago
+                          pago.tipo_pago,  // Monto del pago
                         ]);
 
                         // Estilo de la tabla
@@ -244,6 +259,7 @@ export default function Dashboard({ handleLogout }) {
                         console.error('Error al generar el reporte:', error);
                       }
                     };
+
 
 
 
@@ -413,14 +429,17 @@ export default function Dashboard({ handleLogout }) {
                 {/* Tipo de Pago */}
                 <div>
                   <label htmlFor="tipo_pago" className="block text-sm font-medium text-gray-700 mb-2">Tipo de Pago</label>
-                  <input
+                  <select
                     id="tipo_pago"
-                    type="text"
-                    placeholder="Tipo de Pago"
                     value={paymentData.tipo_pago}
                     onChange={(e) => setPaymentData({ ...paymentData, tipo_pago: e.target.value })}
                     className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+                  >
+                    <option value="">Selecciona un tipo de pago</option>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Deposito">Depósito</option>
+                    <option value="Transferencia">Transferencia</option>
+                  </select>
                 </div>
 
                 {/* Botón */}
